@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HONTONE-FGX - フィッシングメール多角的リスク判定ユーティリティ</title>
+    <link rel="icon" type="image/png" href="HONTONE-FGX-ICON.png">
+    <meta name="description" content="受信したメール（.msg / .eml / .txt）をドラッグ＆ドロップするだけで、独自の確率モデルと技術的根拠（SPF/DKIM/DMARC・ドメイン整合性・リンク詐称など）からフィッシング詐欺のリスクを瞬時に判定・可視化するWindows用フリーウェアです。">
+    <meta name="robots" content="index, follow">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #38bdf8;
+            --badge-bg: rgba(56, 189, 248, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        /* ヒーローセクション（2カラム） */
+        .hero {
+            max-width: 1200px;
+            margin: 2rem auto 4rem;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .hero-text {
+            text-align: left;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            line-height: 1.3;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-sub);
+            margin-bottom: 2.5rem;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        .cta-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .hero-image-wrapper {
+            position: relative;
+            text-align: center;
+        }
+
+        .app-screenshot {
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            transition: transform 0.3s ease;
+        }
+
+        .app-screenshot:hover {
+            transform: scale(1.02);
+        }
+
+        /* 目玉機能ハイライトセクション */
+        .highlight-section {
+            max-width: 1200px;
+            margin: 5rem auto;
+            padding: 3rem 2rem;
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .highlight-image {
+            text-align: center;
+        }
+
+        .highlight-image .app-screenshot {
+            max-width: 100%;
+        }
+
+        .highlight-badge {
+            display: inline-block;
+            background-color: var(--badge-bg);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .highlight-text h2 {
+            font-size: 1.9rem;
+            line-height: 1.35;
+            margin-bottom: 1.2rem;
+            color: #ffffff;
+        }
+
+        .highlight-text p {
+            color: var(--text-sub);
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .highlight-list li {
+            position: relative;
+            padding-left: 1.8rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-main);
+            font-size: 0.98rem;
+        }
+
+        .highlight-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* 画面ギャラリーセクション */
+        .gallery-section {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 0 1rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .gallery-card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: auto;
+            border-bottom: 1px solid #334155;
+        }
+
+        .gallery-card-body {
+            padding: 1.8rem;
+        }
+
+        .gallery-card-body h3 {
+            font-size: 1.3rem;
+            color: var(--accent);
+            margin-bottom: 0.6rem;
+        }
+
+        .gallery-card-body p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        /* 機能グリッド */
+        .features {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2rem;
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.8rem;
+            color: var(--accent);
+        }
+
+        .feature-card p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        /* ガイドセクション */
+        .guide-section {
+            max-width: 1000px;
+            margin: 6rem auto;
+            padding: 0 1rem;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .guide-card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .guide-card h3 {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-card p, .guide-card li {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .steps-container {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2.5rem;
+        }
+
+        .steps-container h3 {
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .step-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            list-style: none;
+        }
+
+        .step-item {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1.2rem;
+            position: relative;
+        }
+
+        .step-num {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 0.85rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .step-item p {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        .supported-formats {
+            max-width: 1000px;
+            margin: 6rem auto;
+            padding: 2.5rem 1rem;
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .supported-formats h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+        }
+
+        .tag {
+            background-color: #334155;
+            color: var(--accent);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* ライセンス・免責事項 */
+        .legal-section {
+            max-width: 1000px;
+            margin: 6rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .legal-card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .legal-card h3 {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .legal-card p {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-sub);
+            border-top: 1px solid #1e293b;
+            margin-top: 6rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .hero-text {
+                text-align: center;
+            }
+            .highlight-section {
+                grid-template-columns: 1fr;
+            }
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <img src="HONTONE-FGX-ICON.png" alt="HONTONE-FGX Icon" class="logo-icon">
+            <div class="logo">HONTONE-FGX</div>
+        </div>
+        <a href="#download" class="cta-btn" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">ダウンロード</a>
+    </header>
+
+    <!-- 1. ヒーローセクション（ファーストビュー） -->
+    <section class="hero" id="download">
+        <div class="hero-text">
+            <h1>怪しいメールをドラッグ＆ドロップで<br>瞬時にリスク判定</h1>
+            <p>「このメール、本当に本物？」と迷ったら画面にドロップするだけ。<br>送信元認証・ドメイン整合性・リンク詐称など多角的な技術根拠から、フィッシング詐欺の可能性を冷静に可視化します。</p>
+            <a href="https://github.com/roseGarden2500/HONTONE-FGX/releases/latest" class="cta-btn">最新版をダウンロード（無料）</a>
+        </div>
+        <div class="hero-image-wrapper">
+            <img src="HONTONE-FGX-Open.png" alt="HONTONE-FGX アプリ起動画面" class="app-screenshot">
+        </div>
+    </section>
+
+    <!-- 2. 【最重要】3階層解析＆ファクト可視化ハイライト -->
+    <section class="highlight-section">
+        <div class="highlight-image">
+            <img src="HONTONE-FGX-Total.png" alt="リスク判定完了の画面表示" class="app-screenshot">
+        </div>
+        <div class="highlight-text">
+            <span class="highlight-badge">根拠が見える安心設計</span>
+            <h2>スコアだけでなく、<br>「なぜ怪しいのか」の<br>技術的根拠まで丸わかり</h2>
+            <p>単なる危険度判定にとどまらず、メール内部に隠された技術的ファクトを自動抽出して分かりやすく解説します。</p>
+            <ul class="highlight-list">
+                <li><strong>🛡️ 総合判定タブ：</strong> 独自の確率モデルによるリスク評価と、今すぐ取るべき行動のサマリーを提示</li>
+                <li><strong>🔍 要点解説タブ：</strong> 認証失敗やリンク偽装など、特に警戒すべきリスク要因をハイライト表示</li>
+                <li><strong>📋 分析ログタブ：</strong> 全9項目の技術的検証ログを網羅。テキストはすべて選択・コピー可能で報告にも最適</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- 3. 画面ギャラリーセクション（詳細ログ・要点解説） -->
+    <section class="gallery-section">
+        <h2 class="section-title">初心者にも専門家にも分かりやすい3階層ビュー</h2>
+        <div class="gallery-grid">
+            <div class="gallery-card">
+                <img src="HONTONE-FGX-Points.png" alt="要点解説タブの表示例">
+                <div class="gallery-card-body">
+                    <h3>検出されたリスクの要点を即座に把握</h3>
+                    <p>「SPF/DKIM認証の失敗」「表示名と実ドメインの不一致」「切迫した文面による誘導」など、詐欺メール特有の兆候を噛み砕いた日本語でリストアップします。</p>
+                </div>
+            </div>
+            <div class="gallery-card">
+                <img src="HONTONE-FGX-Log.png" alt="分析ログタブの表示例">
+                <div class="gallery-card-body">
+                    <h3>全9項目の詳細ファクトと検証ログ</h3>
+                    <p>インターネットヘッダーやドメイン登録情報、アンカーテキストの偽装有無など、9つの監査視点から抽出した客観的な事実をフルログで出力します。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 機能カード一覧 -->
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">✉️</div>
+            <h3>マルチメーラー形式に対応</h3>
+            <p>Outlookの「.msg」ファイルはもちろん、Thunderbirdや各種Webメーラーから保存した「.eml」「.txt」ファイルの解析に両対応しています。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <h3>送信元認証の厳密チェック</h3>
+            <p>インターネットヘッダーを解析し、SPF・DKIM・DMARCといった正規の送信元認証を通過しているか、なりすましがないかを厳密に検証します。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔗</div>
+            <h3>リンク詐称・隠し文字の検知</h3>
+            <p>見た目上のURLと実際の遷移先が異なるアンカーテキスト詐称や、フィルター回避を狙う不可視の制御文字の混入を見逃しません。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>確率モデル×構造化ファクト</h3>
+            <p>メールの組成を学習した内蔵の確率モデルと技術的ファクトを組み合わせ、感情に左右されない冷静かつ一貫したリスク評価を行います。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>完全ローカル完結でプライバシー保護</h3>
+            <p>メール本文やヘッダー情報を外部のクラウドサーバーへ送信することは一切ありません。社外秘や個人情報を含むメールも安心して検証できます。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h3>インストール不要のポータブル仕様</h3>
+            <p>Windowsレジストリを一切汚さず、ZIPファイルを解凍して実行ファイルをダブルクリックするだけですぐに使えるクリーン設計です。</p>
+        </div>
+    </section>
+
+    <!-- ご利用の流れ・操作方法ガイド -->
+    <section class="guide-section">
+        <h2 class="section-title">ご利用の流れ</h2>
+        
+        <div class="guide-grid">
+            <div class="guide-card">
+                <h3>📦 インストール方法</h3>
+                <p>ダウンロードしたzipファイルを任意のフォルダに解凍するだけで、すぐにご利用いただけます（インストーラー不要・レジストリ不使用のポータブル仕様です）。</p>
+            </div>
+            <div class="guide-card">
+                <h3>🚀 起動方法</h3>
+                <p>解凍したフォルダ内にある実行ファイル <strong>`HONTONE-FGX.exe`</strong> をダブルクリックして起動してください。デスクトップなどに<strong>ショートカットを作成</strong>しておくと便利です。</p>
+            </div>
+        </div>
+
+        <div class="steps-container">
+            <h3>📝 基本的な操作方法</h3>
+            <ul class="step-list">
+                <li class="step-item">
+                    <span class="step-num">1</span>
+                    <p>メーラーから不審なメールをドラッグ、またはファイルとして保存する</p>
+                </li>
+                <li class="step-item">
+                    <span class="step-num">2</span>
+                    <p>HONTONE-FGX の画面内にメールファイルをドラッグ＆ドロップする</p>
+                </li>
+                <li class="step-item">
+                    <span class="step-num">3</span>
+                    <p>「総合判定」「要点解説」「分析ログ」を確認して安全性を判断する</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="supported-formats">
+        <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--text-main);">対応メールフォーマット</h2>
+        <div class="tags">
+            <span class="tag">Outlook メッセージ (.msg)</span>
+            <span class="tag">標準 MIME メール (.eml)</span>
+            <span class="tag">生ヘッダー付きテキスト (.txt)</span>
+        </div>
+    </section>
+
+    <!-- ライセンス・免責事項 -->
+    <section class="legal-section">
+        <div class="legal-card">
+            <h3>利用ライセンス</h3>
+            <p>本ソフトウェア（HONTONE-FGX）はフリーウェアです。個人利用・法人利用を問わず、どなたでも無料でお使いいただけます。再配布を行う場合は改変せずそのままの状態で配布してください。</p>
+        </div>
+        <div class="legal-card">
+            <h3>免責事項</h3>
+            <p>当ツールの判定結果はメールの組成や各種ファクトに基づく確率的な計算であり、100%の正確性を保証するものではありません。最終的な判断は利用者ご自身の責任において行ってください。本ソフトの利用により生じた損害について作者は一切の責任を負いかねます。</p>
+        </div>
+    </section>
+
+    <footer>
+        <p style="margin-bottom: 0.8rem;">
+            <a href="https://ofuse.me/52a72f46" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: bold;">👉 不具合報告・開発者へのご支援（OFUSE）はこちら</a>
+        </p>
+        <p>&copy; 2026 Feature GateX. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
